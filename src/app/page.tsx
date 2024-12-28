@@ -14,7 +14,8 @@ import { useEffect, useState } from 'react';
 import supabase from '../lib/supabase';
 
 const AuthPage = () => {
-  const [user, setUser] = useState(null);
+  // Type the state for user as either 'null' or a user object type (you can define 'User' type as needed)
+  const [user, setUser] = useState<any | null>(null); // Change 'any' to the correct type if you have it
 
   useEffect(() => {
     const getSession = async () => {
@@ -22,7 +23,7 @@ const AuthPage = () => {
       if (error) {
         console.error('Error fetching session:', error.message);
       } else {
-        setUser(session?.user);
+        setUser(session?.user || null);  // Set 'null' if no user
         // Get the access token provided by Supabase (which will have read-only access to GitHub)
         const accessToken = session?.provider_token; // This is the GitHub access token
         if (accessToken) {
@@ -33,7 +34,6 @@ const AuthPage = () => {
   
     getSession();
   }, []);
-  
 
   const signInWithGitHub = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -44,9 +44,8 @@ const AuthPage = () => {
     });
     if (error) console.error('GitHub authentication error:', error);
   };
-  
 
-  const fetchGitHubData = async (accessToken) => {
+  const fetchGitHubData = async (accessToken: string) => {
     try {
       // Fetch user repositories (read-only access)
       const reposResponse = await fetch('https://api.github.com/user/repos?type=all', {
@@ -75,8 +74,6 @@ const AuthPage = () => {
       console.error('Error fetching GitHub data:', error);
     }
   };
-  
-  
 
   const signOut = async () => {
     await supabase.auth.signOut();
