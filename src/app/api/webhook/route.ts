@@ -1,64 +1,73 @@
-// app/api/webhook/route.ts
-import { NextResponse } from 'next/server'
-import { App } from '@octokit/app'
-import { Octokit } from '@octokit/rest'
+import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
-const githubApp = new App({
-  appId: process.env.GITHUB_APP_ID!,
-  privateKey: process.env.GITHUB_PRIVATE_KEY!,
-})
-
-async function getInstallationOctokit(installationId: number) {
-  const installation = await githubApp.getInstallationOctokit(installationId)
-  return installation
-}
+const SECRET = process.env.WEBHOOK_SECRET || "";  // Replace this with your actual webhook secret
 
 export async function POST(req: Request) {
-  try {
-    const payload = await req.json()
-    
-    // Skip if not a push event
-    if (!payload.commits) {
-      console.log('Not a push event, skipping...')
-      return new NextResponse('OK')
+    const signature = req.headers.get('x-hub-signature-256'); // GitHub sends the signature in this header
+    const body = await req.text();  // Raw body for signature verification
+
+    // Compute the HMAC using your Webhook Secret to verify the webhook's authenticity
+    const computedSignature =
+        'sha256=' + 
+        crypto.createHmac('sha256', SECRET).update(body).digest('hex');
+
+    // Check if the computed signature matches the one GitHub sent in the header
+    if (signature !== computedSignature) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    // Get installation-specific client
-    const installationId = payload.installation.id
-    const octokit = await getInstallationOctokit(installationId)
+    const payload = JSON.parse(body);
+    console.log('Webhook event received:', payload);
 
-    // Process each commit
-    for (const commit of payload.commits) {
-      // Get detailed commit info
-      const { data: commitData } = await octokit.repos.getCommit({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        ref: commit.id
-      })
+    // Extract relevant data from the payload
+    const repository = payload.repository;
+    const commits = payload.commits;
 
-      // Log the data
-      console.log({
-        commit: {
-          id: commit.id,
-          message: commit.message,
-          author: commit.author.username,
-          timestamp: commit.timestamp
-        },
-        stats: {
-          additions: commitData.stats?.additions || 0,
-          deletions: commitData.stats?.deletions || 0,
-          total_files: commitData.files?.length || 0
-        },
-        repository: {
-          name: payload.repository.full_name,
-          branch: payload.ref.replace('refs/heads/', '')
-        }
-      })
-    }
+    // Initialize total LOC counters
+    let totalLocAdded = 0;
+    let totalLocRemoved = 0;
+    let modifiedFiles: any[] = [];
+    let addedFiles: any[] = [];
+    let removedFiles: any[] = [];
 
-    return new NextResponse('OK')
-  } catch (error) {
-    console.error('Webhook error:', error)
-    return new NextResponse('Error', { status: 500 })
-  }
+    // Iterate over each commit in the payload
+    commits.forEach((commit: any) => {
+        // Handle added files
+        commit.added.forEach((file: any) => {
+            addedFiles.push(file);  // Add added file to the list
+            // Assume each added file contributes 1 LOC (this is an estimate, you can modify it)
+            totalLocAdded += 1;
+        });
+
+        // Handle removed files
+        commit.removed.forEach((file: any) => {
+            removedFiles.push(file);  // Add removed file to the list
+            // Assume each removed file contributes 1 LOC (this is an estimate, you can modify it)
+            totalLocRemoved += 1;
+        });
+
+        // Handle modified files
+        commit.modified.forEach((file: any) => {
+            modifiedFiles.push(file);  // Add modified file to the list
+        });
+    });
+
+    // Log relevant information
+    console.log(`Repository: ${repository.name}`);
+    console.log(`Total LOC added in this push: ${totalLocAdded}`);
+    console.log(`Total LOC removed in this push: ${totalLocRemoved}`);
+    console.log(`Modified files: ${modifiedFiles.join(', ')}`);
+    console.log(`Added files: ${addedFiles.join(', ')}`);
+    console.log(`Removed files: ${removedFiles.join(', ')}`);
+
+    // Return a success response with detailed information
+    return NextResponse.json({ 
+        message: 'Webhook processed successfully!', 
+        totalLocAdded: totalLocAdded,
+        totalLocRemoved: totalLocRemoved,
+        addedFiles: addedFiles,
+        removedFiles: removedFiles,
+        modifiedFiles: modifiedFiles 
+    });
 }
