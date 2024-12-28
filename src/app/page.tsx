@@ -12,6 +12,7 @@
 "use client"
 import { useEffect, useState } from 'react';
 import supabase from '../lib/supabase';
+import InstallGitHubApp from '@/components/InstallGitHubApp';
 
 const AuthPage = () => {
   // Type the state for user as either 'null' or a user object type (you can define 'User' type as needed)
@@ -90,6 +91,10 @@ const AuthPage = () => {
       ) : (
         <button onClick={signInWithGitHub}>Sign In with GitHub</button>
       )}
+
+      <div>
+        <InstallGitHubApp/>
+      </div>
     </div>
   );
 };
