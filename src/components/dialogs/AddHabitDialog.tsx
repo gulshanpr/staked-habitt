@@ -4,8 +4,15 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { type Habit } from "@/types/habits"
 
-export function AddHabitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+interface AddHabitDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSubmit: (habit: Omit<Habit, "id" | "status" | "progress">) => void
+}
+
+export function AddHabitDialog({ open, onOpenChange, onSubmit }: AddHabitDialogProps) {
   const [step, setStep] = useState(1)
   const [habitData, setHabitData] = useState({
     title: "",
@@ -18,10 +25,16 @@ export function AddHabitDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
   const handleSubmit = () => {
-    // Handle habit submission
-    console.log(habitData)
+    onSubmit(habitData)
     onOpenChange(false)
     setStep(1)
+    setHabitData({
+      title: "",
+      time: "",
+      stake: "",
+      duration: "",
+      repetition: []
+    })
   }
 
   return (
@@ -85,12 +98,12 @@ export function AddHabitDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium mb-2">Stake Amount (USDC)</label>
+                <label className="block text-sm font-medium mb-2">Stake Amount (ETH)</label>
                 <input
                   type="number"
                   className="w-full p-2 rounded-lg border border-slate-200"
                   value={habitData.stake}
-                  onChange={(e) => setHabitData({ ...habitData, stake: e.target.value })}
+                  onChange={(e) => setHabitData({ ...habitData, stake: e.target.value + " ETH" })}
                   placeholder="1.0"
                 />
               </div>

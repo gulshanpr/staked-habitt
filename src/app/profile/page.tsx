@@ -4,11 +4,55 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/navbar"
-import { GitHubStats } from "@/components/GithubStats"
+import { ActivityGraph } from "@/components/github/ActivityGraph"
 import { AddHabitDialog } from "@/components/dialogs/AddHabitDialog"
+import { HabitList } from "@/components/habits/HabitList"
+import { type Habit } from "@/types/habits"
 
 export default function Profile() {
   const [addHabitOpen, setAddHabitOpen] = useState(false)
+  const [habits, setHabits] = useState<Habit[]>([
+    {
+      id: "1",
+      title: "Daily Exercise",
+      status: "Completed",
+      progress: 100,
+      stake: "0.5 ETH",
+      time: "06:00",
+      duration: "2024-03-01",
+      repetition: ["Mon", "Wed", "Fri"]
+    },
+    {
+      id: "2",
+      title: "Reading",
+      status: "In Progress",
+      progress: 60,
+      stake: "0.3 ETH",
+      time: "20:00",
+      duration: "2024-03-15",
+      repetition: ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    },
+    {
+      id: "3",
+      title: "Meditation",
+      status: "Pending",
+      progress: 30,
+      stake: "0.2 ETH",
+      time: "07:00",
+      duration: "2024-03-30",
+      repetition: ["Mon", "Wed", "Fri", "Sun"]
+    }
+  ])
+
+  const handleAddHabit = (newHabit: Omit<Habit, "id" | "status" | "progress">) => {
+    const habit: Habit = {
+      ...newHabit,
+      id: Date.now().toString(),
+      status: "Pending",
+      progress: 0
+    }
+    setHabits(prev => [...prev, habit])
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -64,65 +108,20 @@ export default function Profile() {
                   <Button onClick={() => setAddHabitOpen(true)}>Add New Habit</Button>
                 </div>
                 
-                <div className="space-y-4">
-                  {habits.map((habit, index) => (
-                    <div
-                      key={habit.name}
-                      className="p-4 border border-slate-200 rounded-xl hover:border-purple-200 transition-colors"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium">{habit.name}</h4>
-                        <span className={`px-2 py-1 rounded-full text-sm ${
-                          habit.status === "Completed" ? "bg-green-100 text-green-700" :
-                          habit.status === "In Progress" ? "bg-blue-100 text-blue-700" :
-                          "bg-yellow-100 text-yellow-700"
-                        }`}>
-                          {habit.status}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm text-slate-600">
-                        <span>Progress: {habit.progress}%</span>
-                        <span>{habit.stake} staked</span>
-                      </div>
-                      <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-purple-500 rounded-full"
-                          style={{ width: `${habit.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <HabitList habits={habits} />
               </div>
 
-              <GitHubStats />
+              <ActivityGraph />
             </div>
           </motion.div>
         </div>
       </div>
 
-      <AddHabitDialog open={addHabitOpen} onOpenChange={setAddHabitOpen} />
+      <AddHabitDialog 
+        open={addHabitOpen} 
+        onOpenChange={setAddHabitOpen}
+        onSubmit={handleAddHabit}
+      />
     </div>
   )
 }
-
-const habits = [
-  {
-    name: "Daily Exercise",
-    status: "Completed",
-    progress: 100,
-    stake: "0.5 ETH"
-  },
-  {
-    name: "Reading",
-    status: "In Progress",
-    progress: 60,
-    stake: "0.3 ETH"
-  },
-  {
-    name: "Meditation",
-    status: "Pending",
-    progress: 30,
-    stake: "0.2 ETH"
-  }
-]
