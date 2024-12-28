@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const SECRET = process.env.WEBHOOK_SECRET || "";  // Replace this with your actual webhook secret
+const SECRET = process.env.WEBHOOK_SECRET || "";
 
 export async function POST(req: Request) {
-    const signature = req.headers.get('x-hub-signature-256'); // GitHub sends the signature in this header
-    const body = await req.text();  // Raw body for signature verification
+    const signature = req.headers.get('x-hub-signature-256');
+    const body = await req.text();
 
     // Compute the HMAC using your Webhook Secret to verify the webhook's authenticity
     const computedSignature =
