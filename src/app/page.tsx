@@ -1,18 +1,11 @@
-// import ConnectButton from '@/components/ConnectButton';
-
-// export default function Home() {
-//   return (
-//     <div>
-//       <h1>Welcome to Web3Modal with Wagmi</h1>
-//       <ConnectButton />
-//     </div>
-//   );
-// }
-
-"use client"
-import { useEffect, useState } from 'react';
-import supabase from '../lib/supabase';
-import InstallGitHubApp from '@/components/InstallGitHubApp';
+"use client";
+import { useEffect, useState } from "react";
+import supabase from "../lib/supabase";
+import InstallGitHubApp from "@/components/InstallGitHubApp";
+import ConnectButton from "@/components/ConnectButton";
+import { ethers } from "ethers";
+import Web3AuthComponent from "../components/Web3AuthComponent";
+import { web3auth } from "../lib/web3auth";
 
 const AuthPage = () => {
   // Type the state for user as either 'null' or a user object type (you can define 'User' type as needed)
@@ -20,11 +13,14 @@ const AuthPage = () => {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error) {
-        console.error('Error fetching session:', error.message);
+        console.error("Error fetching session:", error.message);
       } else {
-        setUser(session?.user || null);  // Set 'null' if no user
+        setUser(session?.user || null); // Set 'null' if no user
         // Get the access token provided by Supabase (which will have read-only access to GitHub)
         const accessToken = session?.provider_token; // This is the GitHub access token
         if (accessToken) {
@@ -32,32 +28,35 @@ const AuthPage = () => {
         }
       }
     };
-  
+
     getSession();
   }, []);
 
   const signInWithGitHub = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
+      provider: "github",
       options: {
-        scopes: 'repo:read user:email',  // Only request read access
+        scopes: "repo:read user:email", // Only request read access
       },
     });
-    if (error) console.error('GitHub authentication error:', error);
+    if (error) console.error("GitHub authentication error:", error);
   };
 
   const fetchGitHubData = async (accessToken: string) => {
     try {
       // Fetch user repositories (read-only access)
-      const reposResponse = await fetch('https://api.github.com/user/repos?type=all', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const reposResponse = await fetch(
+        "https://api.github.com/user/repos?type=all",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
       const repos = await reposResponse.json();
-      
-      console.log('User Repositories:', repos);
-  
+
+      console.log("User Repositories:", repos);
+
       // Fetch commits for each repository (read-only access)
       for (const repo of repos) {
         const commitsResponse = await fetch(
@@ -69,10 +68,10 @@ const AuthPage = () => {
           }
         );
         const commits = await commitsResponse.json();
-        console.log('Commits for repository:', repo.name, commits);
+        console.log("Commits for repository:", repo.name, commits);
       }
     } catch (error) {
-      console.error('Error fetching GitHub data:', error);
+      console.error("Error fetching GitHub data:", error);
     }
   };
 
@@ -81,19 +80,44 @@ const AuthPage = () => {
     setUser(null); // Clear the user state after sign out
   };
 
+  const getaccounts = async () => {
+    const provider = await web3auth.connect();
+    if (!provider) {
+      throw new Error("No provider available");
+    }
+    const ethersProvider = new ethers.providers.Web3Provider(provider);
+    const signer = ethersProvider.getSigner();
+    const address = await signer.getChainId();
+
+    console.log("Address:", address);
+  };
+
+  const handleSigner = async () => {};
+
   return (
     <div>
-      {user ? (
+      {/* {user ? (
         <div>
           <p>Welcome, {user.email}</p>
           <button onClick={signOut}>Sign Out</button>
         </div>
       ) : (
         <button onClick={signInWithGitHub}>Sign In with GitHub</button>
-      )}
+      )} */}
 
       <div>
-        <InstallGitHubApp/>
+        <InstallGitHubApp />
+      </div>
+      <div>{/* <ConnectButton /> */}</div>
+      <div>
+        <button onClick={handleSigner}>click</button>
+      </div>
+      <div>
+        <Web3AuthComponent />
+      </div>
+
+      <div>
+        <button onClick={getaccounts}>Get Accounts</button>
       </div>
     </div>
   );

@@ -1,12 +1,11 @@
 import { Chain } from "wagmi/chains";
 
-// Define the custom chain
 export const OpenCampusCodexChain: Chain = {
   id: 656476,
   name: "OpenCampus Codex",
   nativeCurrency: {
     name: "OpenCampus Codex Token",
-    symbol: "OCC", // Replace with the correct symbol if applicable
+    symbol: "OCC",
     decimals: 18,
   },
   rpcUrls: {
@@ -19,5 +18,5 @@ export const OpenCampusCodexChain: Chain = {
       url: "https://opencampus-codex.blockscout.com/",
     },
   },
-  testnet: true, // Set to true if this is a test network
+  testnet: true,
 };

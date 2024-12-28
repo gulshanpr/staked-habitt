@@ -15,6 +15,7 @@ createWeb3Modal({
   projectId,
   enableAnalytics: true,
   enableOnramp: true,
+  allowUnsupportedChain: true
 });
 
 export default function Web3ModalProvider({
